@@ -45,9 +45,9 @@ languageRouter
 
 languageRouter
   .get('/head', async (req, res, next) => {
-    LanguageService.getUsersLanguage(
+    LanguageService.getLanguageHead(
       req.app.get('db'),
-      req.params.id
+      req.params
     )
     .then(result => {
       res.send(result)
