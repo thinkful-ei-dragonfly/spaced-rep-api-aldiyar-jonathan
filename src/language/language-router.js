@@ -98,8 +98,28 @@ languageRouter
 
       let headWord = words.find(word => word.id === language.head)
       let nextWord = words.find(word => word.id === headWord.next);
-      let nextNextWord = words.find(word => word.id === nextWord.next);
       if (guess !== headWord.translation) {
+        await LanguageService.resetMemoryValue(
+          req.app.get('db'),
+          headWord
+        )
+        await LanguageService.changeHead(
+          req.app.get('db'),
+          req.language.id,
+          nextWord
+        )
+        await LanguageService.moveNewHeadPointer(
+          req.app.get('db'),
+          headWord
+        )
+        await LanguageService.moveOldHeadPointer(
+          req.app.get('db'),
+          headWord
+        )
+        await LanguageService.updateIncorrectCount(
+          req.app.get('db'),
+          headWord
+        )
         res.status(200).send({
           nextWord: nextWord.original,
           totalScore: language.total_score,
@@ -108,26 +128,50 @@ languageRouter
           answer: headWord.translation,
           isCorrect: false
         })
+
+        
+      }
+      else {
+        await LanguageService.doubleMemoryValue(
+          req.app.get('db'),
+          headWord
+        )
+        headWord.memory_value = headWord.memory_value*2
+
         await LanguageService.changeHead(
           req.app.get('db'),
           req.language.id,
-          nextWord.id
-        )
-        await LanguageService.moveNewHeadPointer(
-          req.app.get('db'),
-          headWord.id,
-          nextWord.id
+          nextWord
         )
         await LanguageService.moveOldHeadPointer(
-          req.app.get('db'),
-          headWord.id,
-          nextNextWord.id
-        )
-        await LanguageService.updateIncorrectCount(
           req.app.get('db'),
           headWord
         )
 
+        await LanguageService.moveNewHeadPointer(
+          req.app.get('db'),
+          headWord
+        )
+        await LanguageService.updateCorrectCount(
+          req.app.get('db'),
+          headWord
+        )
+
+        await LanguageService.updateTotalScore(
+          req.app.get('db'),
+          language
+        )
+
+        res.status(200).send({
+          nextWord: nextWord.original,
+          totalScore: language.total_score + 1,
+          wordCorrectCount: nextWord.correct_count,
+          wordIncorrectCount: nextWord.incorrect_count,
+          answer: headWord.translation,
+          isCorrect: true
+        })
+
+        
       }
       next()
     } catch (error) {

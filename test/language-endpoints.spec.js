@@ -211,12 +211,12 @@ describe('Language Endpoints', function () {
       })
     })
 
-    context.skip(`Given correct guess`, () => {
+    context(`Given correct guess`, () => {
       const testLanguagesWords = testWords.filter(
         word => word.language_id === testLanguage.id
       )
 
-      it.skip(`responds with correct and moves head`, () => {
+      it(`responds with correct and moves head`, () => {
         const correctPostBody = {
           guess: testLanguagesWords[0].translation,
         }

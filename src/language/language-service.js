@@ -29,33 +29,60 @@ const LanguageService = {
       .where({ language_id })
   },
 
-  changeHead(db, language_id, headWord_id) {
+  changeHead(db, language_id, nextWord) {
     return db
       .from('language')
       .where('id', language_id)
-      .update({head: headWord_id})
+      .update({head: nextWord.id})
   },
 
-  moveNewHeadPointer(db, oldHead_id, newHead_id) {
+  moveNewHeadPointer(db, oldHead) {
     return db
       .from('word')
-      .where('id', newHead_id)
-      .update({ next: oldHead_id })
+      .where('id', (oldHead.next + oldHead.memory_value) - 1)
+      .update({ next: oldHead.id })
   },
 
-  moveOldHeadPointer(db, oldHead_id, newHeadNext_id) {
+  moveOldHeadPointer(db, oldHead) {
     return db
       .from('word')
-      .where('id', oldHead_id)
-      .update({ next: newHeadNext_id })
+      .where('id', oldHead.id)
+      .update({ next: (oldHead.next + oldHead.memory_value)})
   },
 
   updateIncorrectCount(db, wordToUpdate) {
-    console.log(wordToUpdate)
     return db
       .from('word')
       .where('id', wordToUpdate.id)
       .update({ incorrect_count: (wordToUpdate.incorrect_count) + 1 })
+    },
+
+    updateCorrectCount(db, wordToUpdate){
+      return db
+      .from('word')
+      .where('id', wordToUpdate.id)
+      .update({ correct_count: (wordToUpdate.correct_count) + 1})
+    },
+
+    doubleMemoryValue(db, wordToUpdate){
+      return db
+      .from('word')
+      .where('id', wordToUpdate.id)
+      .update({ memory_value: wordToUpdate.memory_value*2})
+    },
+
+    resetMemoryValue(db, wordToUpdate){
+      return db
+      .from('word')
+      .where('id', wordToUpdate.id)
+      .update({ memory_value: 1})
+    },
+
+    updateTotalScore(db, language){
+      return db
+      .from('language')
+      .where('id', language.id)
+      .update({ total_score: language.total_score+1 })
     }
     
 }
