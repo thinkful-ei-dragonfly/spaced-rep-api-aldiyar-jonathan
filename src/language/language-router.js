@@ -103,8 +103,8 @@ languageRouter
         res.status(200).send({
           nextWord: nextWord.original,
           totalScore: language.total_score,
-          wordCorrectCount: headWord.correct_count,
-          wordIncorrectCount: headWord.incorrect_count,
+          wordCorrectCount: nextWord.correct_count,
+          wordIncorrectCount: nextWord.incorrect_count,
           answer: headWord.translation,
           isCorrect: false
         })
@@ -125,7 +125,7 @@ languageRouter
         )
         await LanguageService.updateIncorrectCount(
           req.app.get('db'),
-          nextWord
+          headWord
         )
 
       }

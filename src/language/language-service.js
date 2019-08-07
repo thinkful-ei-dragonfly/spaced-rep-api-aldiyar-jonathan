@@ -51,6 +51,7 @@ const LanguageService = {
   },
 
   updateIncorrectCount(db, wordToUpdate) {
+    console.log(wordToUpdate)
     return db
       .from('word')
       .where('id', wordToUpdate.id)
