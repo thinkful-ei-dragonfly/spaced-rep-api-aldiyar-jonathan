@@ -105,7 +105,7 @@ languageRouter
         })
         nextWord.next = headWord.id;
         headWord = nextWord;
-        headWord.next = 
+        headWord.next;
       }
       next()
     } catch (error) {
