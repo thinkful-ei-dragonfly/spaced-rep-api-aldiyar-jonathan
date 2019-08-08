@@ -43,11 +43,12 @@ const LanguageService = {
       .update({ next: oldHead.id })
   },
 
-  moveOldHeadPointer(db, oldHead) {
+  moveOldHeadPointer(db, oldHead, words) {
+    let Memory = Math.min(words.length, oldHead.memory_value)
     return db
       .from('word')
       .where('id', oldHead.id)
-      .update({ next: (oldHead.next + oldHead.memory_value)})
+      .update({ next: (oldHead.next + Memory)})
   },
 
   updateIncorrectCount(db, wordToUpdate) {

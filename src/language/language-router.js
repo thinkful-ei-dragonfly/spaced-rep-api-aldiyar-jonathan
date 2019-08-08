@@ -145,7 +145,8 @@ languageRouter
         )
         await LanguageService.moveOldHeadPointer(
           req.app.get('db'),
-          headWord
+          headWord,
+          words
         )
 
         await LanguageService.moveNewHeadPointer(
