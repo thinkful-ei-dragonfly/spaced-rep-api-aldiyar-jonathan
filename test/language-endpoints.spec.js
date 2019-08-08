@@ -169,7 +169,7 @@ describe('Language Endpoints', function () {
         })
     })
 
-    context(`Given incorrect guess`, () => {
+    context.only(`Given incorrect guess`, () => {
       const incorrectPostBody = {
         guess: 'incorrect',
       }

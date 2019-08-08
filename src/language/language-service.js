@@ -29,53 +29,52 @@ const LanguageService = {
       .where({ language_id })
   },
 
-  changeHead(db, language_id, nextWord) {
+  changeHead(db, language_id, newHead) {
     return db
       .from('language')
       .where('id', language_id)
-      .update({head: nextWord.id})
+      .update({head: newHead.value.id})
   },
 
-  moveNewHeadPointer(db, oldHead) {
+  moveWordThatPoints(db, wordThatPoints, originalHead) {
     return db
       .from('word')
-      .where('id', (oldHead.next + oldHead.memory_value) - 1)
-      .update({ next: oldHead.id })
+      .where('id', wordThatPoints.value.id)
+      .update({ next: originalHead.value.id })
   },
 
-  moveOldHeadPointer(db, oldHead, words) {
-    let Memory = Math.min(words.length, oldHead.memory_value)
+  moveWordToPoint(db, originalHead, wordToPoint) {
     return db
       .from('word')
-      .where('id', oldHead.id)
-      .update({ next: (oldHead.next + Memory)})
+      .where('id', originalHead.value.id)
+      .update({ next: wordToPoint.value.id})
   },
 
   updateIncorrectCount(db, wordToUpdate) {
     return db
       .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ incorrect_count: (wordToUpdate.incorrect_count) + 1 })
+      .where('id', wordToUpdate.value.id)
+      .update({ incorrect_count: (wordToUpdate.value.incorrect_count) + 1 })
     },
 
     updateCorrectCount(db, wordToUpdate){
       return db
       .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ correct_count: (wordToUpdate.correct_count) + 1})
+      .where('id', wordToUpdate.value.id)
+      .update({ correct_count: (wordToUpdate.value.correct_count) + 1})
     },
 
     doubleMemoryValue(db, wordToUpdate){
       return db
       .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ memory_value: wordToUpdate.memory_value*2})
+      .where('id', wordToUpdate.value.id)
+      .update({ memory_value: wordToUpdate.value.memory_value*2})
     },
 
     resetMemoryValue(db, wordToUpdate){
       return db
       .from('word')
-      .where('id', wordToUpdate.id)
+      .where('id', wordToUpdate.value.id)
       .update({ memory_value: 1})
     },
 

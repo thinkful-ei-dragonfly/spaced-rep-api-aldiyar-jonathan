@@ -3,6 +3,7 @@ const LanguageService = require('./language-service')
 const {
   requireAuth
 } = require('../middleware/jwt-auth')
+const SinglyLinked = require('../../linkedList');
 
 const languageRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -96,84 +97,135 @@ languageRouter
         req.language.id
       )
 
-      let headWord = words.find(word => word.id === language.head)
-      let nextWord = words.find(word => word.id === headWord.next);
-      if (guess !== headWord.translation) {
+      let linkedList = new SinglyLinked();
+
+      words.forEach(word => {
+        linkedList.insertLast(word);
+      })
+      console.log(linkedList)
+      let wordThatPoints;
+      let newHead = linkedList.head.next;
+      linkedList.head.next = newHead.next;
+      newHead.next = linkedList.head;
+      
+      
+      let memory = Math.min(words.length, originalHead.value.memory_value)
+      function findWordThatPoints() {
+        let currentNode = linkedList.head;
+        for (i = 0; i < memory; i++) {
+          
+          wordThatPoints = currentNode;
+          currentNode = currentNode.next;
+          
+        }
+        return wordThatPoints;
+      }
+      wordThatPoints = findWordThatPoints();
+      
+
+      function findWordToPoint() {
+        let currentNode = originalHead;
+        // console.log(currentNode)
+        for (i = 0; i <= memory; i++) {
+          //first round i =0 current = originalHead(1) wordToPoint = originalHead.next(2) currentNode = originalHead.next(2);
+          //secondRound i = 1 current = originalHead.next(2) wortToPoint = originalHead.next.next(3) current node = orignialHead.next.next(3)
+          //thrirdRound i = 2 current = originalHead.next.next(3) wordToPoint = originalHead.next.next.next(4) current node = originalHead.next.netx.next(4)
+          wordToPoint = currentNode;
+          currentNode = currentNode.next;
+        }
+
+        return wordToPoint;
+      }
+
+      wordToPoint = findWordToPoint();
+      
+
+      linkedList.head = linkedList.head.next;
+      originalHead.next = wordToPoint;
+      wordThatPoints.next = originalHead;
+
+      // let headWord = words.find(word => word.id === language.head)
+      // let nextWord = words.find(word => word.id === headWord.next);
+      if (guess !== originalHead.value.translation) {
         await LanguageService.resetMemoryValue(
           req.app.get('db'),
-          headWord
+          originalHead
         )
+        originalHead.memory_value = 1;
+        on
         await LanguageService.changeHead(
           req.app.get('db'),
           req.language.id,
-          nextWord
+          linkedList.head
         )
-        await LanguageService.moveNewHeadPointer(
+        await LanguageService.moveWordThatPoints(
           req.app.get('db'),
-          headWord
+          wordThatPoints,
+          originalHead
         )
-        await LanguageService.moveOldHeadPointer(
+        await LanguageService.moveWordToPoint(
           req.app.get('db'),
-          headWord
+          originalHead,
+          wordToPoint
         )
         await LanguageService.updateIncorrectCount(
           req.app.get('db'),
-          headWord
+          originalHead
         )
         res.status(200).send({
-          nextWord: nextWord.original,
+          nextWord: linkedList.head.value.original,
           totalScore: language.total_score,
-          wordCorrectCount: nextWord.correct_count,
-          wordIncorrectCount: nextWord.incorrect_count,
-          answer: headWord.translation,
+          wordCorrectCount: linkedList.head.value.correct_count,
+          wordIncorrectCount: linkedList.head.value.incorrect_count,
+          answer: originalHead.value.translation,
           isCorrect: false
         })
 
         
       }
-      else {
-        await LanguageService.doubleMemoryValue(
-          req.app.get('db'),
-          headWord
-        )
-        headWord.memory_value = headWord.memory_value*2
+      // else {
+      //   await LanguageService.doubleMemoryValue(
+      //     req.app.get('db'),
+      //     headWord
+      //   )
+      //   headWord.memory_value = headWord.memory_value*2
 
-        await LanguageService.changeHead(
-          req.app.get('db'),
-          req.language.id,
-          nextWord
-        )
-        await LanguageService.moveOldHeadPointer(
-          req.app.get('db'),
-          headWord,
-          words
-        )
+      //   await LanguageService.changeHead(
+      //     req.app.get('db'),
+      //     req.language.id,
+      //     nextWord
+      //   )
+      //   await LanguageService.moveOldHeadPointer(
+      //     req.app.get('db'),
+      //     headWord,
+      //     words
+      //   )
 
-        await LanguageService.moveNewHeadPointer(
-          req.app.get('db'),
-          headWord
-        )
-        await LanguageService.updateCorrectCount(
-          req.app.get('db'),
-          headWord
-        )
+      //   await LanguageService.moveNewHeadPointer(
+      //     req.app.get('db'),
+      //     headWord
+      //   )
+      //   await LanguageService.updateCorrectCount(
+      //     req.app.get('db'),
+      //     headWord
+      //   )
 
-        await LanguageService.updateTotalScore(
-          req.app.get('db'),
-          language
-        )
+      //   await LanguageService.updateTotalScore(
+      //     req.app.get('db'),
+      //     language
+      //   )
 
-        res.status(200).send({
-          nextWord: nextWord.original,
-          totalScore: language.total_score + 1,
-          wordCorrectCount: nextWord.correct_count,
-          wordIncorrectCount: nextWord.incorrect_count,
-          answer: headWord.translation,
-          isCorrect: true
-        })
+      //   res.status(200).send({
+      //     nextWord: nextWord.original,
+      //     totalScore: language.total_score + 1,
+      //     wordCorrectCount: nextWord.correct_count,
+      //     wordIncorrectCount: nextWord.incorrect_count,
+      //     answer: headWord.translation,
+      //     isCorrect: true
+      //   })
 
         
-      }
+      // }
       next()
     } catch (error) {
       next(error)
