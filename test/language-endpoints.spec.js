@@ -169,7 +169,7 @@ describe('Language Endpoints', function () {
         })
     })
 
-    context.only(`Given incorrect guess`, () => {
+    context(`Given incorrect guess`, () => {
       const incorrectPostBody = {
         guess: 'incorrect',
       }
@@ -190,7 +190,7 @@ describe('Language Endpoints', function () {
           })
       })
 
-      it.only(`moves the word 1 space and updates incorrect count`, async () => {
+      it(`moves the word 1 space and updates incorrect count`, async () => {
         await supertest(app)
           .post(`/api/language/guess`)
           .set('Authorization', helpers.makeAuthHeader(testUser))
@@ -211,7 +211,7 @@ describe('Language Endpoints', function () {
       })
     })
 
-    context(`Given correct guess`, () => {
+    context.only(`Given correct guess`, () => {
       const testLanguagesWords = testWords.filter(
         word => word.language_id === testLanguage.id
       )

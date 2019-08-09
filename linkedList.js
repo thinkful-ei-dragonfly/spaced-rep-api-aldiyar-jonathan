@@ -112,42 +112,55 @@ class SinglyLinked {
     currNode.next = newNode;
     newNode.next = tail;
   }
-
-  insertAt(item, index) {
-    // 10
-    //   5->null = 10-> 5-> null
-    const newNode = new _Node(item);
-
-    let count = 0;
-    let prevNode = this.head;
-    let currNode = this.head;
-
-    while(currNode.next !== null && count !== index) {
-      prevNode = currNode;
-      currNode = currNode.next;
-      count++;
+  insertAt(nthPosition, itemToInsert) {
+    if (nthPosition < 0) {
+      throw new Error('Position error');
     }
-    if(count !== index) {
-      console.log('No value found at that index');
-      return;
+    if (nthPosition === 0) {
+      this.insertFirst(itemToInsert);
+    } else {
+      // Find the node which we want to insert after
+      console.log(nthPosition - 1)
+      const node = this._findNthElement(nthPosition - 1);
+      const newNode = new _Node(itemToInsert, null);
+      newNode.next = node.next;
+      node.next = newNode;
     }
-
-    if(this.head.next === null) {
-      this.head = newNode;
-      newNode.next = currNode;
-      return;
-    }
-    
-    prevNode.next = newNode;
-    newNode.next = currNode;
   }
-  size(list) {
-    let counter = 0;
-    while (list.head !== null) {
-      counter++;
-      list.head = list.head.next;
+
+  _findNthElement(position){
+    let node = this.head
+    for(let i = 0; i < position; i++){
+      node = node.next
     }
-    return;
+    return node
+  }
+  display(){
+    let result = [];
+    let currentNode = this.head;
+    while(currentNode !== null){
+      result.push(currentNode.value);
+      currentNode = currentNode.next;
+    }
+    return result;
+  }
+  
+  size(){
+    return this.display().length;
+  }
+  moveHeadBy(amount){
+    let head = this.head
+    this.head = this.head.next
+    this.insertAt(amount, head.value)
+  }
+  forEach(cb){
+    let node = this.head
+    const arr = []
+    while(node){
+      arr.push(cb(node))
+      node = node.next
+    }
+    return arr
   }
 }
 

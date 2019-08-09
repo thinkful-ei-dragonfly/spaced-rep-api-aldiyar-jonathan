@@ -87,115 +87,59 @@ languageRouter
     }
 
     try {
-      const language = await LanguageService.getUsersLanguage(
-        req.app.get('db'),
-        req.user.id
-      )
-
       const words = await LanguageService.getLanguageWords(
         req.app.get('db'),
         req.language.id
       )
+      const wordList = LanguageService.fillList(
+        req.app.get('db'),
+        req.language,
+        words
+      )
+      if (guess !== wordList.head.value.translation) {
+        //modifying the linkedList
+        wordList.head.value.incorrect_count++
+        wordList.head.value.memory_value = 1
+        let answer = wordList.head.value.translation
+        wordList.moveHeadBy(wordList.head.value.memory_value)
 
-      let linkedList = new SinglyLinked();
-
-      words.map(word => {
-        linkedList.insertLast(word);
-      })
-
-      let oldHead = linkedList.head
-      let newHead = linkedList.head.next
-      let memory = Math.min(words.length, linkedList.head.value.memory_value)
-      let nodeThatPoints
-
-      function OldHeadPointer(){
-        let currNode = linkedList.head
-        for(i = 0; i < memory; i++){
-          nodeThatPoints = currNode.next
-          currNode = currNode.next
-        }
-        return nodeThatPoints 
+        //modifying the database
+        await LanguageService.updateDataBase(
+          req.app.get('db'),
+          wordList
+        )
+          res.status(200).send({
+            nextWord: wordList.head.value.original,
+            totalScore: wordList.total_score,
+            wordCorrectCount: wordList.head.value.correct_count,
+            wordIncorrectCount: wordList.head.value.incorrect_count,
+            answer,
+            isCorrect: false
+          }) 
       }
+      else {
+        //modifying the linkedList
+        wordList.head.value.correct_count++
+        wordList.head.value.memory_value = Math.min(wordList.size()-1, wordList.head.value.memory_value * 2)
+        wordList.total_score++
+        wordList.moveHeadBy(wordList.head.value.memory_value)
 
-      nodeThatPoints = OldHeadPointer()
-      
-      // let headWord = words.find(word => word.id === language.head)
-      // let nextWord = words.find(word => word.id === headWord.next);
-
-      if (guess !== linkedList.head.value.translation) {
-        await LanguageService.changeHead(
+        //modifying the database
+        await LanguageService.updateDataBase(
           req.app.get('db'),
-          language.id,
-          newHead
+          wordList
         )
-
-        await LanguageService.oldHeadPointsTo(
-          req.app.get('db'),
-          nodeThatPoints,
-          oldHead
-        )
-        await LanguageService.oldHeadPointedFrom(
-          req.app.get('db'),
-          nodeThatPoints,
-          oldHead
-        )
-
-        console.log(linkedList)
         res.status(200).send({
-          nextWord: linkedList.head.next.value.original,
-          totalScore: language.total_score,
-          wordCorrectCount: linkedList.head.value.correct_count,
-          wordIncorrectCount: linkedList.head.value.incorrect_count,
-          answer: linkedList.head.value.translation,
-          isCorrect: false
-        })
-        
-        
+          nextWord: wordList.head.value.original,
+          totalScore: wordList.total_score,
+          wordCorrectCount: wordList.head.value.correct_count,
+          wordIncorrectCount: wordList.head.value.incorrect_count,
+          answer: guess,
+          isCorrect: true
+        }) 
+
         
       }
-      // else {
-      //   await LanguageService.doubleMemoryValue(
-      //     req.app.get('db'),
-      //     headWord
-      //   )
-      //   headWord.memory_value = headWord.memory_value*2
-
-      //   await LanguageService.changeHead(
-      //     req.app.get('db'),
-      //     req.language.id,
-      //     nextWord
-      //   )
-      //   await LanguageService.moveOldHeadPointer(
-      //     req.app.get('db'),
-      //     headWord,
-      //     words
-      //   )
-
-      //   await LanguageService.moveNewHeadPointer(
-      //     req.app.get('db'),
-      //     headWord
-      //   )
-      //   await LanguageService.updateCorrectCount(
-      //     req.app.get('db'),
-      //     headWord
-      //   )
-
-      //   await LanguageService.updateTotalScore(
-      //     req.app.get('db'),
-      //     language
-      //   )
-
-      //   res.status(200).send({
-      //     nextWord: nextWord.original,
-      //     totalScore: language.total_score + 1,
-      //     wordCorrectCount: nextWord.correct_count,
-      //     wordIncorrectCount: nextWord.incorrect_count,
-      //     answer: headWord.translation,
-      //     isCorrect: true
-      //   })
-
-        
-      // }
       next()
     } catch (error) {
       next(error)
