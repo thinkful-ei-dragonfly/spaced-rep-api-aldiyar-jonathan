@@ -211,7 +211,7 @@ describe('Language Endpoints', function () {
       })
     })
 
-    context(`Given correct guess`, () => {
+    context.only(`Given correct guess`, () => {
       const testLanguagesWords = testWords.filter(
         word => word.language_id === testLanguage.id
       )

@@ -3,6 +3,7 @@ const LanguageService = require('./language-service')
 const {
   requireAuth
 } = require('../middleware/jwt-auth')
+const SinglyLinked = require('../../linkedList');
 
 const languageRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -86,91 +87,56 @@ languageRouter
     }
 
     try {
-      const language = await LanguageService.getUsersLanguage(
-        req.app.get('db'),
-        req.user.id
-      )
-
       const words = await LanguageService.getLanguageWords(
         req.app.get('db'),
         req.language.id
       )
+      const wordList = LanguageService.fillList(
+        req.app.get('db'),
+        req.language,
+        words
+      )
+      if (guess !== wordList.head.value.translation) {
+        //modifying the linkedList
+        wordList.head.value.incorrect_count++
+        wordList.head.value.memory_value = 1
+        let answer = wordList.head.value.translation
+        wordList.moveHeadBy(wordList.head.value.memory_value)
 
-      let headWord = words.find(word => word.id === language.head)
-      let nextWord = words.find(word => word.id === headWord.next);
-      if (guess !== headWord.translation) {
-        await LanguageService.resetMemoryValue(
+        //modifying the database
+        await LanguageService.updateDataBase(
           req.app.get('db'),
-          headWord
+          wordList
         )
-        await LanguageService.changeHead(
-          req.app.get('db'),
-          req.language.id,
-          nextWord
-        )
-        await LanguageService.moveNewHeadPointer(
-          req.app.get('db'),
-          headWord
-        )
-        await LanguageService.moveOldHeadPointer(
-          req.app.get('db'),
-          headWord
-        )
-        await LanguageService.updateIncorrectCount(
-          req.app.get('db'),
-          headWord
-        )
-        res.status(200).send({
-          nextWord: nextWord.original,
-          totalScore: language.total_score,
-          wordCorrectCount: nextWord.correct_count,
-          wordIncorrectCount: nextWord.incorrect_count,
-          answer: headWord.translation,
-          isCorrect: false
-        })
-
-        
+          res.status(200).send({
+            nextWord: wordList.head.value.original,
+            totalScore: wordList.total_score,
+            wordCorrectCount: wordList.head.value.correct_count,
+            wordIncorrectCount: wordList.head.value.incorrect_count,
+            answer,
+            isCorrect: false
+          }) 
       }
       else {
-        await LanguageService.doubleMemoryValue(
-          req.app.get('db'),
-          headWord
-        )
-        headWord.memory_value = headWord.memory_value*2
+        //modifying the linkedList
+        wordList.head.value.correct_count++
+        wordList.head.value.memory_value = Math.min(wordList.size()-1, wordList.head.value.memory_value * 2)
+        wordList.total_score++
+        wordList.moveHeadBy(wordList.head.value.memory_value)
 
-        await LanguageService.changeHead(
+        //modifying the database
+        await LanguageService.updateDataBase(
           req.app.get('db'),
-          req.language.id,
-          nextWord
+          wordList
         )
-        await LanguageService.moveOldHeadPointer(
-          req.app.get('db'),
-          headWord,
-          words
-        )
-
-        await LanguageService.moveNewHeadPointer(
-          req.app.get('db'),
-          headWord
-        )
-        await LanguageService.updateCorrectCount(
-          req.app.get('db'),
-          headWord
-        )
-
-        await LanguageService.updateTotalScore(
-          req.app.get('db'),
-          language
-        )
-
         res.status(200).send({
-          nextWord: nextWord.original,
-          totalScore: language.total_score + 1,
-          wordCorrectCount: nextWord.correct_count,
-          wordIncorrectCount: nextWord.incorrect_count,
-          answer: headWord.translation,
+          nextWord: wordList.head.value.original,
+          totalScore: wordList.total_score,
+          wordCorrectCount: wordList.head.value.correct_count,
+          wordIncorrectCount: wordList.head.value.incorrect_count,
+          answer: guess,
           isCorrect: true
-        })
+        }) 
 
         
       }

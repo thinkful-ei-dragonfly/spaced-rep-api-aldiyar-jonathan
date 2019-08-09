@@ -1,3 +1,4 @@
+const SinglyLinked = require('../../linkedList')
 const LanguageService = {
   getUsersLanguage(db, user_id) {
     return db
@@ -29,63 +30,57 @@ const LanguageService = {
       .where({ language_id })
   },
 
-  changeHead(db, language_id, nextWord) {
-    return db
-      .from('language')
-      .where('id', language_id)
-      .update({head: nextWord.id})
-  },
-
-  moveNewHeadPointer(db, oldHead) {
-    return db
-      .from('word')
-      .where('id', (oldHead.next + oldHead.memory_value) - 1)
-      .update({ next: oldHead.id })
-  },
-
-  moveOldHeadPointer(db, oldHead, words) {
-    let Memory = Math.min(words.length, oldHead.memory_value)
-    return db
-      .from('word')
-      .where('id', oldHead.id)
-      .update({ next: (oldHead.next + Memory)})
-  },
-
-  updateIncorrectCount(db, wordToUpdate) {
-    return db
-      .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ incorrect_count: (wordToUpdate.incorrect_count) + 1 })
-    },
-
-    updateCorrectCount(db, wordToUpdate){
-      return db
-      .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ correct_count: (wordToUpdate.correct_count) + 1})
-    },
-
-    doubleMemoryValue(db, wordToUpdate){
-      return db
-      .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ memory_value: wordToUpdate.memory_value*2})
-    },
-
-    resetMemoryValue(db, wordToUpdate){
-      return db
-      .from('word')
-      .where('id', wordToUpdate.id)
-      .update({ memory_value: 1})
-    },
-
-    updateTotalScore(db, language){
-      return db
-      .from('language')
-      .where('id', language.id)
-      .update({ total_score: language.total_score+1 })
-    }
+  fillList(db, language, words){
+    let wordList = new SinglyLinked()
+    wordList.id = language.id
+    wordList.name = language.name
+    wordList.total_score = language.total_score
+    let word = words.find(w => w.id === language.head)
+    wordList.insertFirst({
+      id: word.id,
+      original: word.original,
+      translation: word.translation,
+      memory_value: word.memory_value,
+      correct_count: word.correct_count,
+      incorrect_count: word.incorrect_count
+    })
     
+    while(word.next){
+      word = words.find(w => w.id === word.next)
+      wordList.insertLast({
+        id: word.id,
+        original: word.original,
+        translation: word.translation,
+        memory_value: word.memory_value,
+        correct_count: word.correct_count,
+        incorrect_count: word.incorrect_count,
+      })
+    }
+    return wordList
+  },
+  
+  updateDataBase(db, linkedList_language){
+    return db.transaction(transaction => 
+      Promise.all([
+        db('language')
+        .transacting(transaction)
+        .where('id', linkedList_language.id)
+        .update({
+          total_score: linkedList_language.total_score,
+          head: linkedList_language.head.value.id
+        }),
+        ...linkedList_language.forEach(node =>
+          db('word')
+          .transacting(transaction)
+          .where('id', node.value.id)
+          .update({
+            memory_value: node.value.memory_value,
+            correct_count: node.value.correct_count,
+            incorrect_count: node.value.incorrect_count,
+            next: node.next ? node.next.value.id : null,
+          }))
+      ]))
+  }
 }
 
 
