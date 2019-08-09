@@ -76,7 +76,6 @@ class SinglyLinked {
       currNode = currNode.next;
     }
     result = currNode.value !== item ? 'Item not found' : `Result: ${JSON.stringify(currNode)}`;
-    console.log(result);
     return result;
   }
 
@@ -120,7 +119,6 @@ class SinglyLinked {
       this.insertFirst(itemToInsert);
     } else {
       // Find the node which we want to insert after
-      console.log(nthPosition - 1)
       const node = this._findNthElement(nthPosition - 1);
       const newNode = new _Node(itemToInsert, null);
       newNode.next = node.next;
