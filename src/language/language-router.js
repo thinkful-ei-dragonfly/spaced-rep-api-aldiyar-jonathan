@@ -99,88 +99,58 @@ languageRouter
 
       let linkedList = new SinglyLinked();
 
-      words.forEach(word => {
+      words.map(word => {
         linkedList.insertLast(word);
       })
-      console.log(linkedList)
-      let wordThatPoints;
-      let newHead = linkedList.head.next;
-      linkedList.head.next = newHead.next;
-      newHead.next = linkedList.head;
-      
-      
-      let memory = Math.min(words.length, originalHead.value.memory_value)
-      function findWordThatPoints() {
-        let currentNode = linkedList.head;
-        for (i = 0; i < memory; i++) {
-          
-          wordThatPoints = currentNode;
-          currentNode = currentNode.next;
-          
-        }
-        return wordThatPoints;
-      }
-      wordThatPoints = findWordThatPoints();
-      
 
-      function findWordToPoint() {
-        let currentNode = originalHead;
-        // console.log(currentNode)
-        for (i = 0; i <= memory; i++) {
-          //first round i =0 current = originalHead(1) wordToPoint = originalHead.next(2) currentNode = originalHead.next(2);
-          //secondRound i = 1 current = originalHead.next(2) wortToPoint = originalHead.next.next(3) current node = orignialHead.next.next(3)
-          //thrirdRound i = 2 current = originalHead.next.next(3) wordToPoint = originalHead.next.next.next(4) current node = originalHead.next.netx.next(4)
-          wordToPoint = currentNode;
-          currentNode = currentNode.next;
-        }
+      let oldHead = linkedList.head
+      let newHead = linkedList.head.next
+      let memory = Math.min(words.length, linkedList.head.value.memory_value)
+      let nodeThatPoints
 
-        return wordToPoint;
+      function OldHeadPointer(){
+        let currNode = linkedList.head
+        for(i = 0; i < memory; i++){
+          nodeThatPoints = currNode.next
+          currNode = currNode.next
+        }
+        return nodeThatPoints 
       }
 
-      wordToPoint = findWordToPoint();
+      nodeThatPoints = OldHeadPointer()
       
-
-      linkedList.head = linkedList.head.next;
-      originalHead.next = wordToPoint;
-      wordThatPoints.next = originalHead;
-
       // let headWord = words.find(word => word.id === language.head)
       // let nextWord = words.find(word => word.id === headWord.next);
-      if (guess !== originalHead.value.translation) {
-        await LanguageService.resetMemoryValue(
-          req.app.get('db'),
-          originalHead
-        )
-        originalHead.memory_value = 1;
-        on
+
+      if (guess !== linkedList.head.value.translation) {
         await LanguageService.changeHead(
           req.app.get('db'),
-          req.language.id,
-          linkedList.head
+          language.id,
+          newHead
         )
-        await LanguageService.moveWordThatPoints(
+
+        await LanguageService.oldHeadPointsTo(
           req.app.get('db'),
-          wordThatPoints,
-          originalHead
+          nodeThatPoints,
+          oldHead
         )
-        await LanguageService.moveWordToPoint(
+        await LanguageService.oldHeadPointedFrom(
           req.app.get('db'),
-          originalHead,
-          wordToPoint
+          nodeThatPoints,
+          oldHead
         )
-        await LanguageService.updateIncorrectCount(
-          req.app.get('db'),
-          originalHead
-        )
+
+        console.log(linkedList)
         res.status(200).send({
-          nextWord: linkedList.head.value.original,
+          nextWord: linkedList.head.next.value.original,
           totalScore: language.total_score,
           wordCorrectCount: linkedList.head.value.correct_count,
           wordIncorrectCount: linkedList.head.value.incorrect_count,
-          answer: originalHead.value.translation,
+          answer: linkedList.head.value.translation,
           isCorrect: false
         })
-
+        
+        
         
       }
       // else {

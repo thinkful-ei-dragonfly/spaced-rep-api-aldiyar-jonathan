@@ -36,18 +36,18 @@ const LanguageService = {
       .update({head: newHead.value.id})
   },
 
-  moveWordThatPoints(db, wordThatPoints, originalHead) {
+  oldHeadPointedFrom(db, nodeThatPoints, oldHead) {
     return db
       .from('word')
-      .where('id', wordThatPoints.value.id)
-      .update({ next: originalHead.value.id })
+      .where('id', nodeThatPoints.value.id)
+      .update({ next: oldHead.value.id })
   },
 
-  moveWordToPoint(db, originalHead, wordToPoint) {
+  oldHeadPointsTo(db, nodeThatPoints, oldHead) {
     return db
       .from('word')
-      .where('id', originalHead.value.id)
-      .update({ next: wordToPoint.value.id})
+      .where('id', oldHead.value.id)
+      .update({ next: nodeThatPoints.value.next})
   },
 
   updateIncorrectCount(db, wordToUpdate) {
